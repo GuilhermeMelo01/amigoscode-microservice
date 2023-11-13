@@ -8,7 +8,7 @@ import java.util.UUID;
 @Service
 public record CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
 
-    public void insert(CustomerRequest customerRequest) {
+    public void insertCustomer(CustomerRequest customerRequest) {
         Customer customer = Customer.builder().id(randomIdGenerator()).firstName(customerRequest.firstName())
                 .lastName(customerRequest.lastName()).email(customerRequest.email()).build();
         customerRepository.saveAndFlush(customer);
@@ -18,9 +18,15 @@ public record CustomerService(CustomerRepository customerRepository, RestTemplat
                 FraudCheckResponse.class,
                 customer.getId());
 
-        if (fraudCheckResponse.isFraudster()){
+        if (fraudCheckResponse.isFraudster()) {
             throw new IllegalStateException("fraudster");
         }
+
+        restTemplate.postForObject("http://NOTIFICATION/api/v1/notification",
+                new CustomerNotificationRequest(
+                        customer.getId(), customer.getEmail(),
+                        "Customer " + customer.getFirstName() + customer.getEmail() + " registed successful"),
+                Void.class);
     }
 
 
