@@ -15,6 +15,7 @@
         <module>fraud</module>
         <module>eureka-service</module>
         <module>notification</module>
+        <module>shared-module</module>
     </modules>
 
     <properties>

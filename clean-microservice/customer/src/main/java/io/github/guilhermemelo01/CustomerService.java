@@ -1,12 +1,29 @@
 package io.github.guilhermemelo01;
 
+import io.github.guilhermemelo01.dto.CustomerNotificationRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
 
 @Service
-public record CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
+@RequiredArgsConstructor
+public class CustomerService {
+
+    @Value("${rabbitmq.queue.name}")
+    private String queue;
+    @Value("${rabbitmq.exchange.name}")
+    private String exchange;
+    @Value("${rabbitmq.routingKey.name}")
+    private String routingKey;
+
+    private final CustomerRepository customerRepository;
+    private final RestTemplate restTemplate;
+    private final RabbitTemplate rabbitTemplate;
+
 
     public void insertCustomer(CustomerRequest customerRequest) {
         Customer customer = Customer.builder().id(randomIdGenerator()).firstName(customerRequest.firstName())
@@ -22,11 +39,10 @@ public record CustomerService(CustomerRepository customerRepository, RestTemplat
             throw new IllegalStateException("fraudster");
         }
 
-        restTemplate.postForObject("http://NOTIFICATION/api/v1/notification",
-                new CustomerNotificationRequest(
-                        customer.getId(), customer.getEmail(),
-                        "Customer " + customer.getFirstName() + customer.getEmail() + " registed successful"),
-                Void.class);
+        rabbitTemplate.convertAndSend(exchange, routingKey, new CustomerNotificationRequest(
+                customer.getId(),
+                customer.getEmail(),
+                "Customer " + customer.getFirstName() +" "+ customer.getEmail() + " registed successful"));
     }
 
 

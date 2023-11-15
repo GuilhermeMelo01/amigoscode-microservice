@@ -16,8 +16,21 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: 'true'
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 eureka:
   client:
     service-url:
       default-zone: http://localhost:8761/eureka
+
+rabbitmq:
+  queue:
+    name: customer-notification-queue
+  exchange:
+    name: customer-notification-exchange
+  routingKey:
+    name: customer-notification-key
